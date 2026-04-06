@@ -8,14 +8,16 @@ const calculator = new CalculatorCore();
  */
 function updateDisplay() {
     const display = document.getElementById('display');
-    display.innerText = calculator.getDisplayValue();
+    if (display) {
+        display.innerText = calculator.getDisplayValue();
+    }
 }
 
 /**
  * Навешивает обработчики на кнопки интерфейса.
  */
 function bindUiEvents() {
-    // Нововведение (задача "добавить JSDoc"): основные UI-функции документированы блоками выше.
+    // Обработка цифр
     document.querySelectorAll('.number').forEach((button) => {
         button.addEventListener('click', () => {
             calculator.inputDigit(button.innerText);
@@ -23,6 +25,7 @@ function bindUiEvents() {
         });
     });
 
+    // Обработка операторов
     document.querySelectorAll('.operator').forEach((button) => {
         button.addEventListener('click', () => {
             calculator.handleOperator(button.innerText);
@@ -30,81 +33,104 @@ function bindUiEvents() {
         });
     });
 
-    document.querySelector('.clear').addEventListener('click', () => {
-        calculator.clear();
-        updateDisplay();
-    });
+    // Очистка
+    const clearBtn = document.querySelector('.clear');
+    if (clearBtn) {
+        clearBtn.addEventListener('click', () => {
+            calculator.clear();
+            updateDisplay();
+        });
+    }
 
-    document.querySelector('.equals').addEventListener('click', () => {
-        if (calculator.canEvaluate()) {
-            calculator.handleOperator('=');
+    // Равно
+    const equalsBtn = document.querySelector('.equals');
+    if (equalsBtn) {
+        equalsBtn.addEventListener('click', () => {
+            if (calculator.canEvaluate()) {
+                calculator.handleOperator('=');
+                updateDisplay();
+            }
+        });
+    }
+
+    // Десятичная точка
+    const decimalBtn = document.querySelector('.decimal');
+    if (decimalBtn) {
+        decimalBtn.addEventListener('click', () => {
+            calculator.inputDecimal();
+            updateDisplay();
+        });
+    }
+
+    // Проценты (если есть такая кнопка)
+    const percentBtn = document.querySelector('.percent');
+    if (percentBtn) {
+        percentBtn.addEventListener('click', () => {
+            calculator.calculatePercentage();
+            updateDisplay();
+        });
+    }
+
+    // Backspace (если есть такая кнопка)
+    const backspaceBtn = document.querySelector('.backspace');
+    if (backspaceBtn) {
+        backspaceBtn.addEventListener('click', () => {
+            calculator.backspace();
+            updateDisplay();
+        });
+    }
+}
+
+/**
+ * Добавляет поддержку клавиатуры.
+ */
+function bindKeyboardEvents() {
+    document.addEventListener('keydown', (e) => {
+        // Цифры
+        if (e.key >= '0' && e.key <= '9') {
+            calculator.inputDigit(e.key);
             updateDisplay();
         }
-    });
-});
-
-document.querySelector('.clear').addEventListener('click', () => {
-    clearDisplay();
-});
-
-document.querySelector('.equals').addEventListener('click', () => {
-    if (displayValue === 'Ошибка') {
-        clearDisplay();
-        return;
-    }
-    if (operator && !waitingForSecondOperand) {
-        const inputValue = parseFloat(displayValue);
-        // Сохраняем для повторного нажатия "="
-        lastOperator = operator;
-        lastOperand = inputValue;
-        handleOperator('=');
-    } else if (lastOperator && lastOperand !== null) {
-        // Исправление: повторное нажатие "="
-        const result = calculate(firstOperand, lastOperand, lastOperator);
-        if (result === 'Ошибка') {
-            displayValue = 'Ошибка';
-            firstOperand = null;
-            operator = null;
+        // Десятичная точка
+        else if (e.key === '.') {
+            calculator.inputDecimal();
             updateDisplay();
-            return;
         }
-        displayValue = String(result);
-        firstOperand = result;
-        waitingForSecondOperand = true;
-        updateDisplay();
-    }
-});
-
-    document.querySelector('.decimal').addEventListener('click', () => {
-        calculator.inputDecimal();
-        updateDisplay();
+        // Операторы
+        else if (e.key === '+' || e.key === '-' || e.key === '*' || e.key === '/') {
+            calculator.handleOperator(e.key);
+            updateDisplay();
+        }
+        // Равно (Enter или =)
+        else if (e.key === 'Enter' || e.key === '=') {
+            e.preventDefault();
+            if (calculator.canEvaluate()) {
+                calculator.handleOperator('=');
+                updateDisplay();
+            }
+        }
+        // Очистка (Escape или Delete)
+        else if (e.key === 'Escape' || e.key === 'Delete') {
+            calculator.clear();
+            updateDisplay();
+        }
+        // Backspace
+        else if (e.key === 'Backspace') {
+            e.preventDefault();
+            calculator.backspace();
+            updateDisplay();
+        }
+        // Проценты
+        else if (e.key === '%') {
+            calculator.calculatePercentage();
+            updateDisplay();
+        }
     });
 }
 
-// Исправление: добавлена поддержка клавиатуры
-document.addEventListener('keydown', (e) => {
-    if (displayValue === 'Ошибка' && e.key !== 'Escape' && e.key !== 'Delete') {
-        return;
-    }
-    if (e.key >= '0' && e.key <= '9') {
-        inputDigit(e.key);
-    } else if (e.key === '.') {
-        inputDecimal();
-    } else if (e.key === '+' || e.key === '-' || e.key === '*' || e.key === '/') {
-        handleOperator(e.key);
-    } else if (e.key === 'Enter' || e.key === '=') {
-        e.preventDefault();
-        document.querySelector('.equals')?.click();
-    } else if (e.key === 'Escape' || e.key === 'Delete') {
-        clearDisplay();
-    } else if (e.key === 'Backspace') {
-        if (displayValue.length > 1) {
-            displayValue = displayValue.slice(0, -1);
-        } else {
-            displayValue = '0';
-        }
-        updateDisplay();
-    } else if (e.key === '%') {
-        calculatePercentage();
-    }
+// Инициализация при загрузке страницы
+document.addEventListener('DOMContentLoaded', () => {
+    bindUiEvents();
+    bindKeyboardEvents();
+    updateDisplay();
 });
