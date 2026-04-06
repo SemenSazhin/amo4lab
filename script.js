@@ -124,6 +124,47 @@ document.querySelector('.decimal').addEventListener('click', () => {
     inputDecimal();
 });
 
-// Проблема: нет обработки клавиатуры
+function handleKeyboardInput(event) {
+    const { key } = event;
+
+    if (/^\d$/.test(key)) {
+        inputDigit(key);
+        return;
+    }
+
+    if (['+', '-', '*', '/'].includes(key)) {
+        handleOperator(key);
+        return;
+    }
+
+    if (key === '.') {
+        inputDecimal();
+        return;
+    }
+
+    if (key === 'Enter' || key === '=') {
+        if (operator && !waitingForSecondOperand) {
+            handleOperator('=');
+        }
+        return;
+    }
+
+    if (key === 'Escape' || key.toLowerCase() === 'c') {
+        clearDisplay();
+        return;
+    }
+
+    if (key === 'Backspace') {
+        if (waitingForSecondOperand) {
+            return;
+        }
+
+        displayValue = displayValue.length > 1 ? displayValue.slice(0, -1) : '0';
+        updateDisplay();
+    }
+}
+
+document.addEventListener('keydown', handleKeyboardInput);
+
 // Проблема: нет ограничения длины числа
 // Проблема: при делении на 0 выводится строка, но дальше калькулятор ломается
