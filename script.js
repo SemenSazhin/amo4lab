@@ -1,170 +1,52 @@
-// Калькулятор с "особенностями" для код-ревью
+import { CalculatorCore } from './calculator-core.js';
 
-let displayValue = '0';
-let firstOperand = null;
-let waitingForSecondOperand = false;
-let operator = null;
+// Нововведение (задача "вынести логику в модули"): UI-слой работает с отдельным ядром калькулятора.
+const calculator = new CalculatorCore();
 
+/**
+ * Обновляет текст на дисплее калькулятора.
+ */
 function updateDisplay() {
     const display = document.getElementById('display');
-    display.innerText = displayValue;
+    display.innerText = calculator.getDisplayValue();
 }
 
-function inputDigit(digit) {
-    if (waitingForSecondOperand) {
-        displayValue = digit;
-        waitingForSecondOperand = false;
-    } else {
-        displayValue = displayValue === '0' ? digit : displayValue + digit;
-    }
-    updateDisplay();
-}
-
-function inputDecimal() {
-    if (waitingForSecondOperand) {
-        displayValue = '0.';
-        waitingForSecondOperand = false;
-        updateDisplay();
-        return;
-    }
-    
-    if (!displayValue.includes('.')) {
-        displayValue += '.';
-        updateDisplay();
-    }
-}
-
-function clearDisplay() {
-    displayValue = '0';
-    firstOperand = null;
-    waitingForSecondOperand = false;
-    operator = null;
-    updateDisplay();
-}
-
-function handleOperator(nextOperator) {
-    const inputValue = parseFloat(displayValue);
-    
-    if (operator && waitingForSecondOperand) {
-        operator = nextOperator;
-        return;
-    }
-    
-    if (firstOperand === null && !isNaN(inputValue)) {
-        firstOperand = inputValue;
-    } else if (operator) {
-        const result = calculate(firstOperand, inputValue, operator);
-        displayValue = String(result);
-        firstOperand = result;
-        updateDisplay();
-    }
-    
-    waitingForSecondOperand = true;
-    operator = nextOperator;
-}
-
-function calculate(first, second, op) {
-    switch (op) {
-        case '+':
-            return first + second;
-        case '-':
-            return first - second;
-        case '*':
-            return first * second;
-        case '/':
-            if (second === 0) {
-                return 'Ошибка';
-            }
-            return first / second;
-        default:
-            return second;
-    }
-}
-
-// Проблемная функция - может упасть
-function calculatePercentage() {
-    let value = parseFloat(displayValue);
-    value = value / 100;
-    displayValue = String(value);
-    updateDisplay();
-}
-
-// Неиспользуемая функция
-function unusedFunction() {
-    console.log("Эта функция нигде не используется");
-}
-
-// Глобальная переменная (плохая практика)
-window.someGlobalVar = "это глобальная переменная";
-
-// Проблема с обработкой событий
-document.querySelectorAll('.number').forEach(button => {
-    button.addEventListener('click', () => {
-        inputDigit(button.innerText);
+/**
+ * Навешивает обработчики на кнопки интерфейса.
+ */
+function bindUiEvents() {
+    // Нововведение (задача "добавить JSDoc"): основные UI-функции документированы блоками выше.
+    document.querySelectorAll('.number').forEach((button) => {
+        button.addEventListener('click', () => {
+            calculator.inputDigit(button.innerText);
+            updateDisplay();
+        });
     });
-});
 
-document.querySelectorAll('.operator').forEach(button => {
-    button.addEventListener('click', () => {
-        handleOperator(button.innerText);
+    document.querySelectorAll('.operator').forEach((button) => {
+        button.addEventListener('click', () => {
+            calculator.handleOperator(button.innerText);
+            updateDisplay();
+        });
     });
-});
 
-document.querySelector('.clear').addEventListener('click', () => {
-    clearDisplay();
-});
-
-document.querySelector('.equals').addEventListener('click', () => {
-    if (operator && !waitingForSecondOperand) {
-        handleOperator('=');
-    }
-});
-
-document.querySelector('.decimal').addEventListener('click', () => {
-    inputDecimal();
-});
-
-function handleKeyboardInput(event) {
-    const { key } = event;
-
-    if (/^\d$/.test(key)) {
-        inputDigit(key);
-        return;
-    }
-
-    if (['+', '-', '*', '/'].includes(key)) {
-        handleOperator(key);
-        return;
-    }
-
-    if (key === '.') {
-        inputDecimal();
-        return;
-    }
-
-    if (key === 'Enter' || key === '=') {
-        if (operator && !waitingForSecondOperand) {
-            handleOperator('=');
-        }
-        return;
-    }
-
-    if (key === 'Escape' || key.toLowerCase() === 'c') {
-        clearDisplay();
-        return;
-    }
-
-    if (key === 'Backspace') {
-        if (waitingForSecondOperand) {
-            return;
-        }
-
-        displayValue = displayValue.length > 1 ? displayValue.slice(0, -1) : '0';
+    document.querySelector('.clear').addEventListener('click', () => {
+        calculator.clear();
         updateDisplay();
-    }
+    });
+
+    document.querySelector('.equals').addEventListener('click', () => {
+        if (calculator.canEvaluate()) {
+            calculator.handleOperator('=');
+            updateDisplay();
+        }
+    });
+
+    document.querySelector('.decimal').addEventListener('click', () => {
+        calculator.inputDecimal();
+        updateDisplay();
+    });
 }
 
-document.addEventListener('keydown', handleKeyboardInput);
-
-// Проблема: нет ограничения длины числа
-// Проблема: при делении на 0 выводится строка, но дальше калькулятор ломается
+bindUiEvents();
+updateDisplay();
