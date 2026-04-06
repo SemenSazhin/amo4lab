@@ -1,16 +1,30 @@
-// Калькулятор с "особенностями" для код-ревью
+// Калькулятор с исправленными багами
 
 let displayValue = '0';
 let firstOperand = null;
 let waitingForSecondOperand = false;
 let operator = null;
+let lastOperator = null;
+let lastOperand = null;
+const MAX_DIGITS = 12;
 
 function updateDisplay() {
     const display = document.getElementById('display');
+    // Исправление: ограничение длины числа
+    if (displayValue.replace(/[^0-9]/g, '').length > MAX_DIGITS) {
+        const num = parseFloat(displayValue);
+        if (!isNaN(num)) {
+            displayValue = num.toPrecision(MAX_DIGITS).replace(/\.?0+$/, '');
+        }
+    }
     display.innerText = displayValue;
 }
 
 function inputDigit(digit) {
+    // Исправление: ограничение длины числа
+    if (displayValue.replace(/[^0-9]/g, '').length >= MAX_DIGITS) {
+        return;
+    }
     if (waitingForSecondOperand) {
         displayValue = digit;
         waitingForSecondOperand = false;
@@ -54,6 +68,17 @@ function handleOperator(nextOperator) {
         firstOperand = inputValue;
     } else if (operator) {
         const result = calculate(firstOperand, inputValue, operator);
+        
+        // Исправление: деление на ноль не ломает калькулятор
+        if (result === 'Ошибка') {
+            displayValue = 'Ошибка';
+            firstOperand = null;
+            operator = null;
+            waitingForSecondOperand = true;
+            updateDisplay();
+            return;
+        }
+        
         displayValue = String(result);
         firstOperand = result;
         updateDisplay();
@@ -115,8 +140,30 @@ document.querySelector('.clear').addEventListener('click', () => {
 });
 
 document.querySelector('.equals').addEventListener('click', () => {
+    if (displayValue === 'Ошибка') {
+        clearDisplay();
+        return;
+    }
     if (operator && !waitingForSecondOperand) {
+        const inputValue = parseFloat(displayValue);
+        // Сохраняем для повторного нажатия "="
+        lastOperator = operator;
+        lastOperand = inputValue;
         handleOperator('=');
+    } else if (lastOperator && lastOperand !== null) {
+        // Исправление: повторное нажатие "="
+        const result = calculate(firstOperand, lastOperand, lastOperator);
+        if (result === 'Ошибка') {
+            displayValue = 'Ошибка';
+            firstOperand = null;
+            operator = null;
+            updateDisplay();
+            return;
+        }
+        displayValue = String(result);
+        firstOperand = result;
+        waitingForSecondOperand = true;
+        updateDisplay();
     }
 });
 
@@ -124,6 +171,30 @@ document.querySelector('.decimal').addEventListener('click', () => {
     inputDecimal();
 });
 
-// Проблема: нет обработки клавиатуры
-// Проблема: нет ограничения длины числа
-// Проблема: при делении на 0 выводится строка, но дальше калькулятор ломается
+// Исправление: добавлена поддержка клавиатуры
+document.addEventListener('keydown', (e) => {
+    if (displayValue === 'Ошибка' && e.key !== 'Escape' && e.key !== 'Delete') {
+        return;
+    }
+    if (e.key >= '0' && e.key <= '9') {
+        inputDigit(e.key);
+    } else if (e.key === '.') {
+        inputDecimal();
+    } else if (e.key === '+' || e.key === '-' || e.key === '*' || e.key === '/') {
+        handleOperator(e.key);
+    } else if (e.key === 'Enter' || e.key === '=') {
+        e.preventDefault();
+        document.querySelector('.equals')?.click();
+    } else if (e.key === 'Escape' || e.key === 'Delete') {
+        clearDisplay();
+    } else if (e.key === 'Backspace') {
+        if (displayValue.length > 1) {
+            displayValue = displayValue.slice(0, -1);
+        } else {
+            displayValue = '0';
+        }
+        updateDisplay();
+    } else if (e.key === '%') {
+        calculatePercentage();
+    }
+});
