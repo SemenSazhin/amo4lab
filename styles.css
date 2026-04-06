@@ -9,86 +9,96 @@ body {
     justify-content: center;
     align-items: center;
     min-height: 100vh;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: #252525;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
 .calculator {
-    background: rgba(255, 255, 255, 0.95);
-    border-radius: 20px;
-    padding: 20px;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-    width: 320px;
+    background: #3b3b3b;
+    border: 2px solid #1f1f1f;
+    border-radius: 14px;
+    padding: 16px;
+    box-shadow: 0 14px 28px rgba(0, 0, 0, 0.45);
+    width: 340px;
+}
+
+.brand {
+    color: #bcbcbc;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 2px;
+    text-align: right;
+    margin-bottom: 10px;
 }
 
 .display {
-    background: #1e1e1e;
-    color: #fff;
-    font-size: 48px;
+    background: #c6d9a8;
+    color: #1c2b14;
+    font-size: 44px;
     text-align: right;
-    padding: 20px;
-    border-radius: 10px;
-    margin-bottom: 20px;
-    min-height: 90px;
+    padding: 16px;
+    border-radius: 8px;
+    border: 2px inset #93a57a;
+    margin-bottom: 14px;
+    min-height: 82px;
     word-wrap: break-word;
     overflow-wrap: break-word;
+    font-family: 'Consolas', 'Courier New', monospace;
+    box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.18);
 }
 
 .buttons {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    gap: 10px;
+    gap: 8px;
 }
 
 .btn {
-    padding: 20px;
-    font-size: 20px;
-    border: none;
-    border-radius: 10px;
+    padding: 18px;
+    font-size: 22px;
+    border: 1px solid #1d1d1d;
+    border-radius: 8px;
     cursor: pointer;
-    transition: all 0.3s ease;
-    font-weight: 600;
+    transition: transform 0.12s ease, filter 0.12s ease;
+    font-weight: 700;
+    box-shadow: 0 3px 0 #1e1e1e;
 }
 
 .btn.number {
-    background: #f0f0f0;
-    color: #333;
+    background: #efefef;
+    color: #262626;
 }
 
 .btn.number:hover {
-    background: #e0e0e0;
-    transform: translateY(-2px);
+    filter: brightness(0.95);
 }
 
 .btn.operator {
-    background: #ff9800;
+    background: #ffad33;
     color: white;
 }
 
 .btn.operator:hover {
-    background: #f57c00;
-    transform: translateY(-2px);
+    filter: brightness(0.95);
 }
 
 .btn.clear {
-    background: #f44336;
+    background: #d7524d;
     color: white;
 }
 
 .btn.clear:hover {
-    background: #da190b;
-    transform: translateY(-2px);
+    filter: brightness(0.95);
 }
 
 .btn.equals {
-    background: #4caf50;
+    background: #5397db;
     color: white;
     grid-row: span 2;
 }
 
 .btn.equals:hover {
-    background: #45a049;
-    transform: translateY(-2px);
+    filter: brightness(0.95);
 }
 
 .btn.zero {
@@ -96,5 +106,6 @@ body {
 }
 
 .btn:active {
-    transform: translateY(0);
+    transform: translateY(2px);
+    box-shadow: 0 1px 0 #1e1e1e;
 }
