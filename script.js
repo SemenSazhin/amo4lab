@@ -1,137 +1,45 @@
-// Калькулятор с исправленными багами
+import { CalculatorCore } from './calculator-core.js';
 
-let displayValue = '0';
-let firstOperand = null;
-let waitingForSecondOperand = false;
-let operator = null;
-let lastOperator = null;
-let lastOperand = null;
-const MAX_DIGITS = 12;
+// Нововведение (задача "вынести логику в модули"): UI-слой работает с отдельным ядром калькулятора.
+const calculator = new CalculatorCore();
 
+/**
+ * Обновляет текст на дисплее калькулятора.
+ */
 function updateDisplay() {
     const display = document.getElementById('display');
-    // Исправление: ограничение длины числа
-    if (displayValue.replace(/[^0-9]/g, '').length > MAX_DIGITS) {
-        const num = parseFloat(displayValue);
-        if (!isNaN(num)) {
-            displayValue = num.toPrecision(MAX_DIGITS).replace(/\.?0+$/, '');
-        }
-    }
-    display.innerText = displayValue;
+    display.innerText = calculator.getDisplayValue();
 }
 
-function inputDigit(digit) {
-    // Исправление: ограничение длины числа
-    if (displayValue.replace(/[^0-9]/g, '').length >= MAX_DIGITS) {
-        return;
-    }
-    if (waitingForSecondOperand) {
-        displayValue = digit;
-        waitingForSecondOperand = false;
-    } else {
-        displayValue = displayValue === '0' ? digit : displayValue + digit;
-    }
-    updateDisplay();
-}
-
-function inputDecimal() {
-    if (waitingForSecondOperand) {
-        displayValue = '0.';
-        waitingForSecondOperand = false;
-        updateDisplay();
-        return;
-    }
-    
-    if (!displayValue.includes('.')) {
-        displayValue += '.';
-        updateDisplay();
-    }
-}
-
-function clearDisplay() {
-    displayValue = '0';
-    firstOperand = null;
-    waitingForSecondOperand = false;
-    operator = null;
-    updateDisplay();
-}
-
-function handleOperator(nextOperator) {
-    const inputValue = parseFloat(displayValue);
-    
-    if (operator && waitingForSecondOperand) {
-        operator = nextOperator;
-        return;
-    }
-    
-    if (firstOperand === null && !isNaN(inputValue)) {
-        firstOperand = inputValue;
-    } else if (operator) {
-        const result = calculate(firstOperand, inputValue, operator);
-        
-        // Исправление: деление на ноль не ломает калькулятор
-        if (result === 'Ошибка') {
-            displayValue = 'Ошибка';
-            firstOperand = null;
-            operator = null;
-            waitingForSecondOperand = true;
+/**
+ * Навешивает обработчики на кнопки интерфейса.
+ */
+function bindUiEvents() {
+    // Нововведение (задача "добавить JSDoc"): основные UI-функции документированы блоками выше.
+    document.querySelectorAll('.number').forEach((button) => {
+        button.addEventListener('click', () => {
+            calculator.inputDigit(button.innerText);
             updateDisplay();
-            return;
-        }
-        
-        displayValue = String(result);
-        firstOperand = result;
-        updateDisplay();
-    }
-    
-    waitingForSecondOperand = true;
-    operator = nextOperator;
-}
-
-function calculate(first, second, op) {
-    switch (op) {
-        case '+':
-            return first + second;
-        case '-':
-            return first - second;
-        case '*':
-            return first * second;
-        case '/':
-            if (second === 0) {
-                return 'Ошибка';
-            }
-            return first / second;
-        default:
-            return second;
-    }
-}
-
-// Проблемная функция - может упасть
-function calculatePercentage() {
-    let value = parseFloat(displayValue);
-    value = value / 100;
-    displayValue = String(value);
-    updateDisplay();
-}
-
-// Неиспользуемая функция
-function unusedFunction() {
-    console.log("Эта функция нигде не используется");
-}
-
-// Глобальная переменная (плохая практика)
-window.someGlobalVar = "это глобальная переменная";
-
-// Проблема с обработкой событий
-document.querySelectorAll('.number').forEach(button => {
-    button.addEventListener('click', () => {
-        inputDigit(button.innerText);
+        });
     });
-});
 
-document.querySelectorAll('.operator').forEach(button => {
-    button.addEventListener('click', () => {
-        handleOperator(button.innerText);
+    document.querySelectorAll('.operator').forEach((button) => {
+        button.addEventListener('click', () => {
+            calculator.handleOperator(button.innerText);
+            updateDisplay();
+        });
+    });
+
+    document.querySelector('.clear').addEventListener('click', () => {
+        calculator.clear();
+        updateDisplay();
+    });
+
+    document.querySelector('.equals').addEventListener('click', () => {
+        if (calculator.canEvaluate()) {
+            calculator.handleOperator('=');
+            updateDisplay();
+        }
     });
 });
 
@@ -167,9 +75,11 @@ document.querySelector('.equals').addEventListener('click', () => {
     }
 });
 
-document.querySelector('.decimal').addEventListener('click', () => {
-    inputDecimal();
-});
+    document.querySelector('.decimal').addEventListener('click', () => {
+        calculator.inputDecimal();
+        updateDisplay();
+    });
+}
 
 // Исправление: добавлена поддержка клавиатуры
 document.addEventListener('keydown', (e) => {
